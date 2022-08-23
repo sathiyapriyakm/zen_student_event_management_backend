@@ -134,8 +134,8 @@ app.post("/forgetPassword", async function (request, response) {
     expiresin.setHours(expiresin.getHours() + 1);
     //store random string
     await client
-      .db("guvi-node-app")
-      .collection("url-shortner")
+      .db("guvi-event-app")
+      .collection("event-management")
       .findOneAndUpdate(
         { Email: Email },
         {
@@ -185,8 +185,8 @@ app.put("/changePassword", async function (request, response) {
     // check password
     const hashedPassword = await generateHashedPassword(Password);
     await client
-      .db("guvi-node-app")
-      .collection("url-shortner")
+      .db("guvi-event-app")
+      .collection("event-management")
       .findOneAndUpdate(
         { _id: ObjectId(id) },
         { $set: { Password: hashedPassword } }
