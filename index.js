@@ -5,13 +5,15 @@ import jwt from "jsonwebtoken";
 import cors from "cors";
 import bcrypt from "bcrypt";
 import nodemailer from "nodemailer";
+
+import {adminRouter} from "./routes/admin.js";
 import randomstring from "randomstring";
 import {
   createUser,
   getUserByName,
   getUserByEmail,
   getUserById,
-} from "./helper.js";
+} from "./routes/helper.js";
 import { ObjectId } from "mongodb";
 dotenv.config();
 
@@ -32,7 +34,7 @@ export const client = await createConnection();
 
 app.listen(PORT, () => console.log("Server started in port number:", PORT));
 
-async function generateHashedPassword(password) {
+export async function generateHashedPassword(password) {
   const NO_OF_ROUNDS = 10; //Number of rounds of salting
   const salt = await bcrypt.genSalt(NO_OF_ROUNDS);
   const hashedPassword = await bcrypt.hash(password, salt);
@@ -41,7 +43,7 @@ async function generateHashedPassword(password) {
 // express.json() is a inbuilt middleware to convert data inside body to json format.
 
 
-
+app.use("/admin",adminRouter);
 
 
 app.get("/", function (req, res) {
@@ -89,6 +91,8 @@ app.post("/login", async function (request, response) {
     }
   }
 });
+
+
 app.post("/forgetPassword", async function (request, response) {
   const { Email } = request.body;
   const userFromDB = await getUserByEmail(Email);
