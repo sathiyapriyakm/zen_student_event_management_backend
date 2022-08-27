@@ -49,5 +49,10 @@ export async function updateEventById(id, data) {
 export async function deleteEventById(id) {
   return await client.db("guvi-event-app").collection("event-management-event").deleteOne({ _id: ObjectId(id) });
 }
+export async function updateEventRegistrationById(id, participantlist) {
+  return await client.db("guvi-event-app").collection("event-management-event").updateOne({ _id: ObjectId(id) }, { $set:{participantlist:participantlist}  });
+}
+
+
 
 

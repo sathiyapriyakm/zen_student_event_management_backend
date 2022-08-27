@@ -83,8 +83,18 @@ app.post("/login", async function (request, response) {
     const storedPassword = userFromDB.Password;
     const isPasswordMatch = await bcrypt.compare(Password, storedPassword);
     if (isPasswordMatch) {
-      response.send({ message: "successful login" });
+      // response.send({ message: "successful login" });
       // localStorage.setItem("currentUser",UserName);
+        // response.send({ message: "successful login" });
+        let token = await jwt.sign(
+          { Email: request.body.Email },
+          process.env.SECRET_KEY,
+          {
+            expiresIn: "1h",
+          }
+        );
+        response.status(200).send(token);
+  
     } else {
       response.status(400).send({ message: "Invalid Credential" });
       return;
