@@ -55,7 +55,7 @@ app.post("/signup", async function (request, response) {
   const userFromDB = await getUserByName(Email);
 
   if (userFromDB) {
-    response.status(400).send({ message: "Username already exists" });
+    response.status(400).send({ message: "User already exists" });
   } else {
     const hashedPassword = await generateHashedPassword(Password);
     const result = await createUser({
@@ -84,15 +84,16 @@ app.post("/login", async function (request, response) {
     const isPasswordMatch = await bcrypt.compare(Password, storedPassword);
     if (isPasswordMatch) {
       // response.send({ message: "successful login" });
-      // localStorage.setItem("currentUser",UserName);
-        // response.send({ message: "successful login" });
-        const secret = process.env.SECRET_KEY;
-        const payload = {
+      const secret = process.env.SECRET_KEY;
+      const payload = {
         Email: Email,
       };
-      let token = jwt.sign(payload, secret, { expiresIn: "1h" });
-      response.status(200).send({token});
-  
+      
+    let token = jwt.sign(payload, secret, { expiresIn: "1h" });
+    console.log(token);
+    response.status(200).send({ code: 0, message: 'ok', data: token });
+
+      // localStorage.setItem("currentUser",UserName);
     } else {
       response.status(400).send({ message: "Invalid Credential" });
       return;
