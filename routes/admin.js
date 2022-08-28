@@ -48,14 +48,14 @@ router.post("/login", async function (request, response) {
     const isPasswordMatch = await bcrypt.compare(Password, storedPassword);
     if (isPasswordMatch) {
       // response.send({ message: "successful login" });
-      var token = await jwt.sign(
-        { Email: request.body.Email },
-        process.env.SECRET_KEY,
-        {
-          expiresIn: "1h",
-        }
-      );
-      response.status(200).send({message:`${token}`});
+      const secret = process.env.SECRET_KEY;
+      const payload = {
+        Email: Email,
+      };
+      
+    let token = jwt.sign(payload, secret, { expiresIn: "1h" });
+    console.log(token);
+    response.status(200).send({ code: 0, message: 'ok', data: token });
 
       // localStorage.setItem("currentUser",UserName);
     } else {
