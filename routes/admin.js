@@ -65,7 +65,7 @@ router.post("/login", async function (request, response) {
   }
 });
 
-router.post("/newevent", async function (request, response) {
+router.post("/newevent",authorizedUser, async function (request, response) {
   const {eventname,eventposter,eventsummary,eventdate,eventstarttime,eventduration}=request.body;
   const data = {
     eventname: eventname,
@@ -89,7 +89,7 @@ router.get("/events", authorizedUser,async function (request, response) {
 });
 export const adminRouter = router;
 
-router.get("/event/:id", async function (request, response) {
+router.get("/event/:id",authorizedUser, async function (request, response) {
   const { id } = request.params;
   // const movie=movies.find((mv)=>mv.id===id);
   const event = await getEventById(id);
@@ -98,7 +98,7 @@ router.get("/event/:id", async function (request, response) {
     : response.status(404).send({ msg: "event not found" });
 });
 
-router.put("/event/:id", async function (request, response) {
+router.put("/event/:id",authorizedUser, async function (request, response) {
   const { id } = request.params;
   const data = request.body;
   const result = await updateEventById(id, data);
@@ -113,7 +113,7 @@ router.delete('/event/:id',authorizedUser, async function (request, response) {
   result.deletedCount>0?response.send({msg:"event deleted successfully"}):response.status(404).send({msg:"event not found"});
     })
 
-router.put("/eventreister/:id", async function (request, response) {
+router.put("/eventreister/:id",authorizedUser, async function (request, response) {
       const { id } = request.params;
       const eventFromDB = await getEventById(id);
       const Participants = request.body;
