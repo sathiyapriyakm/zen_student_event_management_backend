@@ -91,7 +91,7 @@ app.post("/login", async function (request, response) {
       
     let token = jwt.sign(payload, secret, { expiresIn: "1h" });
     console.log(token);
-    response.status(200).send({ code: 0, message: 'ok', data: token });
+    response.status(200).send({ code: 0, message: 'ok', data: token, user: {Email:Email, type: "student"} });
 
       // localStorage.setItem("currentUser",UserName);
     } else {
