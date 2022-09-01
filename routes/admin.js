@@ -9,6 +9,7 @@ import {
   updateEventById,
   deleteEventById,
   updateEventRegistrationById,
+  getUserByName,
 } from "./helper.js";
 import { generateHashedPassword } from "../index.js";
 import bcrypt from "bcrypt";
@@ -71,15 +72,21 @@ router.post("/login", async function (request, response) {
   }
 });
 
+router.get("/detail/:email",authorizedUser, async function (request, response) {
+  const { email } = request.params;
+  const student = await getUserByName(email);
+  student ? response.send({id:student._id, name:student.FirstName,email:student.Email}) : response.status(404).send({ msg: "user not found" })
+});
+
 router.post("/newevent",authorizedUser, async function (request, response) {
-  const {eventname,eventposter,eventsummary,eventdate,eventstarttime,eventduration}=request.body;
+  const {eventname,eventposter,eventsummary,eventenddate,eventtrailer,questionlink}=request.body;
   const data = {
     eventname: eventname,
     eventposter: eventposter,
     eventsummary: eventsummary,
-    eventdate: eventdate,
-    eventstarttime: eventstarttime,
-    eventduration: eventduration,
+    eventenddate: eventenddate,
+    eventtrailer: eventtrailer,
+    questionlink: questionlink,
     participantlist:[]
   }
   //db.movies.insertMany(data);
@@ -93,7 +100,65 @@ router.get("/events", authorizedUser,async function (request, response) {
   const events = await getAllEvents();
   response.send(events);
 });
-export const adminRouter = router;
+
+router.get("/events/:email", authorizedUser,async function (request, response) {
+
+  const { email } = request.params;
+  const events = await getAllEvents();
+  let notParticipatedList=[];
+  let flag=0;
+
+  for(let i=0; i<events.length;i++){
+    flag=0;
+    for(let j=0;j<events[i].participantlist.length;j++){
+      if(events[i].participantlist[j].studentEmail===email){
+        flag=1;
+        break;
+      }
+    }
+    if(flag===0){
+      notParticipatedList.push(events[i])
+    }
+  }
+  response.send(notParticipatedList);
+});
+
+
+router.get("/events/part/:email", authorizedUser,async function (request, response) {
+
+  const { email } = request.params;
+  const events = await getAllEvents();
+  let Participateddetail=[];
+  let temp ={};
+
+  for(let i=0; i<events.length;i++){
+
+    for(let j=0;j<events[i].participantlist.length;j++){
+      temp={};
+      if(events[i].participantlist[j].studentEmail===email){
+      
+        temp={
+          eventid:events[i]._id,
+          eventname:events[i].eventname,
+          questionlink:events[i].questionlink,
+          studentId:events[i].participantlist[j].studentId,
+          studentName:events[i].participantlist[j].studentName,
+          frontendcode:events[i].participantlist[j].studentCode.frontendcode,
+          backendcode:events[i].participantlist[j].studentCode.backendcode,
+          frontenddeploy:events[i].participantlist[j].studentCode.frontenddeploy,
+          backenddeploy:events[i].participantlist[j].studentCode.backenddeploy,
+          mark:events[i].participantlist[j].mark,
+          comment:events[i].participantlist[j].comment,
+        }
+        Participateddetail.push(temp);
+        break;
+      }
+    }
+  }
+  response.send(Participateddetail);
+});
+
+
 
 router.get("/event/:id",authorizedUser, async function (request, response) {
   const { id } = request.params;
@@ -103,6 +168,67 @@ router.get("/event/:id",authorizedUser, async function (request, response) {
     ? response.send(event)
     : response.status(404).send({ msg: "event not found" });
 });
+
+
+router.get("/event/code/:eventid/:studentid",authorizedUser, async function (request, response) {
+  const { eventid } = request.params;
+  const { studentid } = request.params;
+  // const movie=movies.find((mv)=>mv.id===id);
+  const event = await getEventById(eventid);
+  let codeData={};
+for(let i=0;i<event.participantlist.length;i++){
+  if(event.participantlist[i].studentId===studentid){
+    codeData={
+      questionlink:event.questionlink,
+      frontendcode:event.participantlist[i].studentCode.frontendcode,
+      backendcode:event.participantlist[i].studentCode.backendcode,
+      frontenddeploy:event.participantlist[i].studentCode.frontenddeploy,
+      backenddeploy:event.participantlist[i].studentCode.backenddeploy,
+    }
+    break;
+  }
+  }
+  Object.keys(codeData).length >0
+    ? response.send(codeData)
+    : response.status(404).send({ msg: "event with participant details not found" });
+});
+
+
+router.put("/evaluvate/:eventid/:studentid",authorizedUser, async function (request, response) {
+  const { eventid } = request.params;
+  const {studentid} = request.params;
+  const {mark,comment} = request.body;
+
+  const eventFromDB = await getEventById(eventid);
+      // const Participants = request.body;
+      const participantlist=[];
+      let evalList={};
+      for(let i=0;i<eventFromDB.participantlist.length;i++){
+        if(eventFromDB.participantlist[i].studentId===studentid){
+          
+          evalList={
+            studentId:eventFromDB.participantlist[i].studentId,
+            studentName:eventFromDB.participantlist[i].studentName,
+            studentEmail:eventFromDB.participantlist[i].studentEmail,
+            studentCode:{
+              frontendcode:eventFromDB.participantlist[i].studentCode.frontendcode,
+              backendcode:eventFromDB.participantlist[i].studentCode.backendcode,
+              frontenddeploy:eventFromDB.participantlist[i].studentCode.frontenddeploy,
+              backenddeploy:eventFromDB.participantlist[i].studentCode.backenddeploy
+            },
+            mark:mark,
+            comment:comment
+          }
+          participantlist.push(evalList);
+        }
+        else{
+        participantlist.push(eventFromDB.participantlist[i]);
+        }
+      }
+      const result = await updateEventRegistrationById(eventid, participantlist);
+      response.send(result);
+});
+
 
 router.put("/event/:id",authorizedUser, async function (request, response) {
   const { id } = request.params;
@@ -129,5 +255,6 @@ router.put("/eventreister/:id",authorizedUser, async function (request, response
       const result = await updateEventRegistrationById(id, participantlist);
       response.send(result);
     });
+    export const adminRouter = router;
 
     

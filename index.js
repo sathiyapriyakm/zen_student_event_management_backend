@@ -5,8 +5,8 @@ import jwt from "jsonwebtoken";
 import cors from "cors";
 import bcrypt from "bcrypt";
 import nodemailer from "nodemailer";
-
 import {adminRouter} from "./routes/admin.js";
+import {studentRouter} from "./routes/student.js"
 import randomstring from "randomstring";
 import {
   createUser,
@@ -44,6 +44,7 @@ export async function generateHashedPassword(password) {
 
 
 app.use("/admin",adminRouter);
+app.use("/student",studentRouter);
 
 
 app.get("/", function (req, res) {
@@ -153,8 +154,8 @@ app.post("/forgetPassword", async function (request, response) {
     expiresin.setHours(expiresin.getHours() + 1);
     //store random string
     await client
-      .db("guvi-event-app")
-      .collection("event-management")
+      .db("zen-event-app")
+      .collection("student")
       .findOneAndUpdate(
         { Email: Email },
         {
@@ -204,8 +205,8 @@ app.put("/changePassword", async function (request, response) {
     // check password
     const hashedPassword = await generateHashedPassword(Password);
     await client
-      .db("guvi-event-app")
-      .collection("event-management")
+      .db("zen-event-app")
+      .collection("student")
       .findOneAndUpdate(
         { _id: ObjectId(id) },
         { $set: { Password: hashedPassword } }
