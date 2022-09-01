@@ -1,5 +1,4 @@
 import express from "express";
-// import { auth } from "../middleware/auth.js";
 import {
   getUserByAdminEmail,
   createAdmin,
@@ -48,7 +47,7 @@ router.post("/login", async function (request, response) {
     const storedPassword = userFromDB.Password;
     const isPasswordMatch = await bcrypt.compare(Password, storedPassword);
     if (isPasswordMatch) {
-      // response.send({ message: "successful login" });
+      
       const secret = process.env.SECRET_KEY;
       const payload = {
         Email: Email,
@@ -200,7 +199,7 @@ router.put("/evaluvate/:eventid/:studentid",authorizedUser, async function (requ
   const {mark,comment} = request.body;
 
   const eventFromDB = await getEventById(eventid);
-      // const Participants = request.body;
+      
       const participantlist=[];
       let evalList={};
       for(let i=0;i<eventFromDB.participantlist.length;i++){

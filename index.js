@@ -84,7 +84,7 @@ app.post("/login", async function (request, response) {
     const storedPassword = userFromDB.Password;
     const isPasswordMatch = await bcrypt.compare(Password, storedPassword);
     if (isPasswordMatch) {
-      // response.send({ message: "successful login" });
+      
       const secret = process.env.SECRET_KEY;
       const payload = {
         Email: Email,
@@ -196,11 +196,7 @@ app.post("/verifyToken", async function (request, response) {
 
 app.put("/changePassword", async function (request, response) {
   const { Password, id } = request.body;
-  // const userFromDB = await getUserById(id);
-  // if(!userFromDB){
-  //   response.status(400).send({message:"Invalid Credential"});
-  // }
-  // else
+  
   try {
     // check password
     const hashedPassword = await generateHashedPassword(Password);
