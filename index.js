@@ -213,4 +213,3 @@ app.put("/changePassword", async function (request, response) {
     response.send({ message: "Unexpected error in password updation" });
   }
 });
-

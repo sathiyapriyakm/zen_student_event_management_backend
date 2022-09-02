@@ -158,6 +158,59 @@ router.get("/events/part/:email", authorizedUser,async function (request, respon
 });
 
 
+router.get("/dashboardDetail/:email", authorizedUser,async function (request, response) {
+
+  const { email } = request.params;
+  const events = await getAllEvents();
+  const totalEvents=events.length;
+  let Participateddetail=[];
+  let temp ={};
+  let totMark=0;
+  let notEval=0;
+  let taskEval=[];
+
+  for(let i=0; i<events.length;i++){
+    for(let j=0;j<events[i].participantlist.length;j++){
+      temp={};
+      if(events[i].participantlist[j].studentEmail===email){
+        temp={
+          eventid:events[i]._id,
+          eventname:events[i].eventname,
+          questionlink:events[i].questionlink,
+          studentId:events[i].participantlist[j].studentId,
+          studentName:events[i].participantlist[j].studentName,
+          frontendcode:events[i].participantlist[j].studentCode.frontendcode,
+          backendcode:events[i].participantlist[j].studentCode.backendcode,
+          frontenddeploy:events[i].participantlist[j].studentCode.frontenddeploy,
+          backenddeploy:events[i].participantlist[j].studentCode.backenddeploy,
+          mark:events[i].participantlist[j].mark,
+          comment:events[i].participantlist[j].comment,
+        }
+        if(temp.mark==="Not evaluvated"){
+          notEval += 1;
+          taskEval.push({Event:temp.eventname,Mark:"Not Evaluvated"});
+        }else{
+          totMark= totMark + parseInt(temp.mark)
+          taskEval.push({Event:temp.eventname,Mark:temp.mark});
+        }
+        Participateddetail.push(temp);
+        break;
+      } 
+    }
+  }
+  const partEvents=Participateddetail.length;
+
+  const dashDetail={
+    totalEvents:totalEvents,
+    participatedEvents:partEvents,
+    totalMarks:totMark,
+    taskNotEval:notEval,
+    taskEval:taskEval
+  }
+  response.send(dashDetail);
+});
+
+
 
 router.get("/event/:id",authorizedUser, async function (request, response) {
   const { id } = request.params;
