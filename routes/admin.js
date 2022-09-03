@@ -13,6 +13,7 @@ import {
 import { generateHashedPassword } from "../index.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
 import {authorizedUser} from "../middleware/auth.js"
 
 const router = express.Router();
@@ -93,6 +94,75 @@ router.post("/newevent",authorizedUser, async function (request, response) {
   response.send(result);
 });
 
+router.post("/newEmail",authorizedUser, async function (request, response) {
+  const { eventid,studentId,studentEmail,studentName,eventname,questionlink, frontendcode,backendcode,frontenddeploy,backenddeploy,mark,comment} = request.body;
+  //send a mail using nodemailer
+
+    //Create Transporter
+    let transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.MAIL_USERNAME,
+        pass: process.env.MAIL_PASSWORD,
+      },
+    });
+    //Mail options
+    let mailOptions = {
+      from: "no-reply@noreply.com",
+      to: studentEmail,
+      subject: `Evaluvation detail of ${eventname}`,
+      html: `<h4>Hello ${studentName},</h4>
+      <p>Kidly find below evaluvation details of ${eventname}</p><br/>
+      <p>Question Link:<u> ${questionlink}</u></p>
+      <p>Front-end Source Code: <u> ${frontendcode}</u></p>
+      <p>Back-end Source Code:<u> ${backendcode}</u></p>
+      <p>Front-end deployment:<u> ${frontenddeploy}</u></p>
+      <p>Back-end deployment :<u> ${backenddeploy}</u></p>
+      <p>Mark : ${mark}</p>
+      <p>Evaluvation comment: ${comment}</p><br/><br/>
+      <h4>Thanks and Regards</h4>
+      <p>Event Organizing team</p>`,
+    };
+    //Send mail
+    transporter.sendMail(mailOptions, (err, data) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log("email sent successfully");
+      }
+    });
+    //store in DB as mail is sent
+    
+    const eventFromDB = await getEventById(eventid);
+    const participantlist=[];
+    let evalList={};
+    for(let i=0;i<eventFromDB.participantlist.length;i++){
+      if(eventFromDB.participantlist[i].studentId===studentId){
+        
+        evalList={
+          studentId:eventFromDB.participantlist[i].studentId,
+          studentName:eventFromDB.participantlist[i].studentName,
+          studentEmail:eventFromDB.participantlist[i].studentEmail,
+          studentCode:{
+            frontendcode:eventFromDB.participantlist[i].studentCode.frontendcode,
+            backendcode:eventFromDB.participantlist[i].studentCode.backendcode,
+            frontenddeploy:eventFromDB.participantlist[i].studentCode.frontenddeploy,
+            backenddeploy:eventFromDB.participantlist[i].studentCode.backenddeploy
+          },
+          mark:mark,
+          comment:comment,
+          result:"Sent",
+        }
+        participantlist.push(evalList);
+      }
+      else{
+      participantlist.push(eventFromDB.participantlist[i]);
+      }
+    }
+    const result = await updateEventRegistrationById(eventid, participantlist);
+    response.send(result);
+});
+
 router.get("/events", authorizedUser,async function (request, response) {
   //db.movies.find({});
 
@@ -155,6 +225,73 @@ router.get("/events/part/:email", authorizedUser,async function (request, respon
     }
   }
   response.send(Participateddetail);
+});
+
+
+router.get("/evaluvatedList", authorizedUser,async function (request, response) {
+
+  const events = await getAllEvents();
+  let evaluvatedDetail=[];
+  let temp ={};
+
+  for(let i=0; i<events.length;i++){
+
+    for(let j=0;j<events[i].participantlist.length;j++){
+      temp={};
+      if((events[i].participantlist[j].result==="Not Sent")||(events[i].participantlist[j].result==="Sent")){
+      
+        temp={
+          eventid:events[i]._id,
+          eventname:events[i].eventname,
+          questionlink:events[i].questionlink,
+          studentId:events[i].participantlist[j].studentId,
+          studentEmail:events[i].participantlist[j].studentEmail,
+          studentName:events[i].participantlist[j].studentName,
+          frontendcode:events[i].participantlist[j].studentCode.frontendcode,
+          backendcode:events[i].participantlist[j].studentCode.backendcode,
+          frontenddeploy:events[i].participantlist[j].studentCode.frontenddeploy,
+          backenddeploy:events[i].participantlist[j].studentCode.backenddeploy,
+          mark:events[i].participantlist[j].mark,
+          comment:events[i].participantlist[j].comment,
+          result:events[i].participantlist[j].result
+        }
+        evaluvatedDetail.push(temp);
+      }
+    }
+  }
+  response.send(evaluvatedDetail);
+});
+
+router.get("/resultDetail/:eventid/:studentId", authorizedUser,async function (request, response) {
+  const { eventid } = request.params;
+  const {studentId}=request.params;
+  const eventFromDB = await getEventById(eventid);
+  let resultDetail={};
+  let flag=0;
+
+    for(let j=0;j<eventFromDB.participantlist.length;j++){
+      if(eventFromDB.participantlist[j].studentId===studentId){
+      
+        resultDetail={
+          eventid:eventFromDB._id,
+          eventname:eventFromDB.eventname,
+          questionlink:eventFromDB.questionlink,
+          studentId:eventFromDB.participantlist[j].studentId,
+          studentEmail:eventFromDB.participantlist[j].studentEmail,
+          studentName:eventFromDB.participantlist[j].studentName,
+          frontendcode:eventFromDB.participantlist[j].studentCode.frontendcode,
+          backendcode:eventFromDB.participantlist[j].studentCode.backendcode,
+          frontenddeploy:eventFromDB.participantlist[j].studentCode.frontenddeploy,
+          backenddeploy:eventFromDB.participantlist[j].studentCode.backenddeploy,
+          mark:eventFromDB.participantlist[j].mark,
+          comment:eventFromDB.participantlist[j].comment,
+          result:eventFromDB.participantlist[j].result
+        }
+        flag=1;
+        break;
+      }
+    }
+    response.send(resultDetail);
 });
 
 
@@ -269,7 +406,8 @@ router.put("/evaluvate/:eventid/:studentid",authorizedUser, async function (requ
               backenddeploy:eventFromDB.participantlist[i].studentCode.backenddeploy
             },
             mark:mark,
-            comment:comment
+            comment:comment,
+            result:"Not Sent",
           }
           participantlist.push(evalList);
         }

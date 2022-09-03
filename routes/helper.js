@@ -32,26 +32,26 @@ return await client.db("zen-event-app").collection("admin").findOne({ Email: Ema
 
 export async function createNewEvent(data) {
   //db.users.findOne({username: username });
-  return await client.db("zen-event-app").collection("event").insertOne(data);
+  return await client.db("zen-event-app").collection("event_new").insertOne(data);
 }
 
 export async function getAllEvents() {
-  return await client.db("zen-event-app").collection("event").find({}).toArray();
+  return await client.db("zen-event-app").collection("event_new").find({}).toArray();
 }
 
 export async function getEventById(id) {
-  return await client.db("zen-event-app").collection("event").findOne({ _id: ObjectId(id) });
+  return await client.db("zen-event-app").collection("event_new").findOne({ _id: ObjectId(id) });
 }
 
 export async function updateEventById(id, data) {
-  return await client.db("zen-event-app").collection("event").updateOne({ _id: ObjectId(id) }, { $set: data });
+  return await client.db("zen-event-app").collection("event_new").updateOne({ _id: ObjectId(id) }, { $set: data });
 }
 
 export async function deleteEventById(id) {
-  return await client.db("zen-event-app").collection("event").deleteOne({ _id: ObjectId(id) });
+  return await client.db("zen-event-app").collection("event_new").deleteOne({ _id: ObjectId(id) });
 }
 export async function updateEventRegistrationById(id, participantlist) {
-  return await client.db("zen-event-app").collection("event").updateOne({ _id: ObjectId(id) }, { $set:{participantlist:participantlist}  });
+  return await client.db("zen-event-app").collection("event_new").updateOne({ _id: ObjectId(id) }, { $set:{participantlist:participantlist}  });
 }
 
 
